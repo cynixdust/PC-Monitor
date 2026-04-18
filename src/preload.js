@@ -1,9 +1,10 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('pcMonitor', {
-  getStaticInfo: () => ipcRenderer.invoke('get-static-info'),
-  getDynamicStats: () => ipcRenderer.invoke('get-dynamic-stats'),
-  minimize: () => ipcRenderer.send('window-minimize'),
-  maximize: () => ipcRenderer.send('window-maximize'),
-  close: () => ipcRenderer.send('window-close')
+contextBridge.exposeInMainWorld('pc', {
+  getStatic: () => ipcRenderer.invoke('get-static'),
+  getFast:   () => ipcRenderer.invoke('get-fast'),
+  getSlow:   () => ipcRenderer.invoke('get-slow'),
+  minimize:  () => ipcRenderer.send('win-min'),
+  maximize:  () => ipcRenderer.send('win-max'),
+  close:     () => ipcRenderer.send('win-close')
 });

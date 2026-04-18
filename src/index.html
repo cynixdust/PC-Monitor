@@ -2,425 +2,718 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>PC Monitor</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --green:#1fffb0;--amber:#ffb83f;--red:#ff4e6a;--blue:#38d2ff;--purple:#b06eff;
-  --bg:#0a0d14;--bg2:#0f1320;--bg3:#151b2e;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --g:#1fffb0;--b:#38d2ff;--a:#ffb83f;--r:#ff4e6a;--p:#b06eff;
+  --bg:#0a0d14;--c1:#0f1320;--c2:#141927;--c3:#1a2035;
+  --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.12);
   --dim:rgba(255,255,255,0.38);--mid:rgba(255,255,255,0.65);
-  --mono:'Share Tech Mono',monospace;--main:'Exo 2',sans-serif;
+  --fast:2000;--slow:6000;
 }
-body{background:var(--bg);color:#fff;font-family:var(--main);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+body{background:var(--bg);color:#fff;font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none;}
 
 /* ── Titlebar ── */
-#titlebar{height:36px;background:var(--bg2);border-bottom:0.5px solid var(--border);display:flex;align-items:center;padding:0 14px;-webkit-app-region:drag;flex-shrink:0;}
-#titlebar .title{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--green);flex:1;}
-.win-btn{-webkit-app-region:no-drag;width:28px;height:28px;border:none;background:transparent;cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;margin-left:2px;transition:background 0.15s;}
-.win-btn:hover{background:rgba(255,255,255,0.08);}
-.win-btn svg{width:12px;height:12px;stroke:#fff;stroke-width:1.5;fill:none;}
-#btn-close:hover{background:rgba(255,78,106,0.25);}
-#btn-close:hover svg{stroke:var(--red);}
+#tb{height:36px;background:var(--c1);border-bottom:0.5px solid var(--bd);display:flex;align-items:center;padding:0 12px;-webkit-app-region:drag;flex-shrink:0;gap:8px;}
+#tb-title{font-size:10px;letter-spacing:2px;color:var(--g);font-weight:600;}
+#ldot{width:5px;height:5px;border-radius:50%;background:var(--g);flex-shrink:0;}
+#tb-info{font-size:10px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+#tb-clock{font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums;flex-shrink:0;}
+.wbtn{-webkit-app-region:no-drag;width:26px;height:26px;border:none;background:transparent;cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;}
+.wbtn:hover{background:rgba(255,255,255,0.09);}
+.wbtn svg{width:10px;height:10px;stroke:#fff;stroke-width:1.6;fill:none;}
+#wc:hover{background:rgba(255,78,106,0.2);}#wc:hover svg{stroke:var(--r);}
 
-/* ── Layout ── */
-#app{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
-#app::-webkit-scrollbar{width:4px;}
-#app::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+/* ── Tab bar ── */
+#tabs{display:flex;align-items:center;background:var(--c1);border-bottom:0.5px solid var(--bd);padding:0 14px;flex-shrink:0;gap:2px;}
+.tab{-webkit-app-region:no-drag;padding:8px 14px;font-size:11px;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s;}
+.tab:hover{color:var(--mid);}
+.tab.active{color:#fff;border-bottom-color:var(--g);}
 
-/* ── System info bar ── */
-#sysbar{display:flex;gap:16px;align-items:center;font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:0.5px;flex-wrap:wrap;}
-#sysbar span{display:flex;align-items:center;gap:5px;}
-.dot-live{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 1.8s infinite;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+/* ── Pages ── */
+.page{display:none;flex:1;overflow-y:auto;padding:12px;flex-direction:column;gap:10px;}
+.page.active{display:flex;}
+.page::-webkit-scrollbar{width:3px;}
+.page::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
 
-/* ── Top gauge row ── */
-.gauge-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-.gcard{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:16px 14px;position:relative;overflow:hidden;}
-.gcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
-.gc-green::before{background:var(--green);}
-.gc-blue::before{background:var(--blue);}
-.gc-amber::before{background:var(--amber);}
-.gc-purple::before{background:var(--purple);}
-.glabel{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--dim);margin-bottom:12px;text-transform:uppercase;}
-.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
-.gauge-svg{width:96px;height:56px;}
-.gval{font-family:var(--mono);font-size:24px;letter-spacing:-1px;}
-.gunit{font-size:12px;}
-.gsub{font-size:10px;color:var(--dim);font-family:var(--mono);text-align:center;line-height:1.3;}
+/* ── Cards ── */
+.card{background:var(--c1);border:0.5px solid var(--bd);border-radius:10px;padding:13px 14px;}
+.ct{font-size:9px;letter-spacing:1.8px;color:var(--dim);text-transform:uppercase;margin-bottom:11px;}
 
-/* ── Middle row ── */
-.mid-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
-.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:16px;}
-.card-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:14px;}
+/* ── Gauge row ── */
+.grow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.gc{background:var(--c1);border:0.5px solid var(--bd);border-radius:10px;padding:13px 10px;position:relative;overflow:hidden;}
+.gc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:10px 10px 0 0;}
+.gg::before{background:var(--g);}.gb::before{background:var(--b);}.ga::before{background:var(--a);}.gp::before{background:var(--p);}
+.gl{font-size:9px;letter-spacing:1.8px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;}
+.gw{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.gs{width:88px;height:52px;}
+.gv{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-1px;}
+.gu{font-size:11px;}
+.gsb{font-size:10px;color:var(--dim);text-align:center;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* ── Core bars ── */
-.core-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
-.core-lbl{font-family:var(--mono);font-size:10px;color:var(--dim);width:20px;flex-shrink:0;}
-.bar-track{flex:1;height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:3px;transition:width 0.5s ease;}
-.core-pct{font-family:var(--mono);font-size:10px;color:var(--mid);width:30px;text-align:right;}
+/* ── Mid row ── */
+.mrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+/* ── Bar rows ── */
+.br{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.br:last-child{margin-bottom:0;}
+.bl{font-size:10px;color:var(--dim);width:22px;flex-shrink:0;}
+.bt{flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden;}
+.bf{height:100%;border-radius:2px;}
+.bp{font-size:10px;color:var(--mid);width:28px;text-align:right;font-variant-numeric:tabular-nums;}
 
 /* ── Storage ── */
-.stor-item{margin-bottom:12px;}
-.stor-item:last-child{margin-bottom:0;}
-.stor-top{display:flex;justify-content:space-between;margin-bottom:5px;}
-.stor-name{font-size:11px;font-family:var(--mono);color:var(--mid);}
-.stor-info{font-size:10px;font-family:var(--mono);color:var(--dim);}
-.stor-track{height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;}
-.stor-fill{height:100%;border-radius:3px;transition:width 0.6s ease;}
+.si{margin-bottom:10px;}
+.si:last-child{margin-bottom:0;}
+.st{display:flex;justify-content:space-between;margin-bottom:4px;}
+.sn{font-size:11px;color:var(--mid);}
+.sv{font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums;}
+.str{height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden;}
+.sf{height:100%;border-radius:2px;}
 
 /* ── Temps ── */
-.temp-row{display:flex;gap:10px;align-items:flex-end;justify-content:space-around;}
+.trow{display:flex;gap:14px;align-items:flex-end;justify-content:space-around;}
 .tcol{display:flex;flex-direction:column;align-items:center;gap:4px;}
-.tbar-wrap{width:20px;height:70px;background:rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;}
-.tbar{width:100%;border-radius:10px;transition:height 0.6s ease;}
-.tdeg{font-family:var(--mono);font-size:10px;color:var(--mid);}
-.tname{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:0.5px;}
-
-/* ── Network ── */
-.net-big{display:flex;flex-direction:column;gap:14px;}
-.net-item{display:flex;align-items:center;gap:10px;}
-.net-icon-box{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.net-details{flex:1;min-width:0;}
-.net-label{font-size:11px;font-family:var(--mono);color:var(--mid);margin-bottom:2px;}
-.net-speed{font-size:10px;font-family:var(--mono);color:var(--dim);}
-.net-dot{width:7px;height:7px;border-radius:50%;}
+.tbw{width:18px;height:64px;background:rgba(255,255,255,0.07);border-radius:9px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;}
+.tb{width:100%;border-radius:9px;}
+.td{font-size:10px;color:var(--mid);font-variant-numeric:tabular-nums;}
+.tn{font-size:9px;color:var(--dim);}
 
 /* ── Bottom row ── */
-.bot-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.brow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ni{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+.ni:last-child{margin:0;}
+.nic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nd{flex:1;}
+.nl{font-size:11px;color:var(--mid);margin-bottom:2px;}
+.ns{font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums;}
+.ndot{width:6px;height:6px;border-radius:50%;}
+.pi{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;padding-bottom:7px;border-bottom:0.5px solid var(--bd);}
+.pi:last-child{border:none;margin:0;padding:0;}
+.pn{font-size:11px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;}
+.ps{display:flex;gap:10px;}
+.pc2{font-size:10px;color:var(--a);font-variant-numeric:tabular-nums;}
+.pm{font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums;}
+#bat-sec{display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bd);}
+.bv{font-size:26px;color:var(--g);font-variant-numeric:tabular-nums;}
+.bs{font-size:10px;color:var(--dim);margin:2px 0 6px;}
+.btr{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;}
+.btf{height:100%;border-radius:3px;}
 
-/* ── Processes ── */
-.proc-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border);}
-.proc-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
-.proc-name{font-size:11px;font-family:var(--mono);color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
-.proc-stats{display:flex;gap:12px;}
-.proc-cpu{font-size:10px;font-family:var(--mono);color:var(--amber);}
-.proc-mem{font-size:10px;font-family:var(--mono);color:var(--dim);}
+/* ── History page ── */
+.hgrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.hcard{background:var(--c1);border:0.5px solid var(--bd);border-radius:10px;padding:13px 14px;}
+.hcard canvas{display:block;width:100%;height:120px;}
+.hhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.hval{font-size:18px;font-variant-numeric:tabular-nums;}
+.hpeak{font-size:10px;color:var(--dim);}
 
-/* ── Battery ── */
-.bat-section{display:flex;flex-direction:column;gap:10px;}
-.bat-big{font-family:var(--mono);font-size:32px;color:var(--green);}
-.bat-big span{font-size:14px;}
-.bat-sub{font-size:10px;font-family:var(--mono);color:var(--dim);}
-.bat-bar-track{height:8px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;margin-top:4px;}
-.bat-bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease;}
+/* ── Settings page ── */
+.sgroup{background:var(--c1);border:0.5px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:10px;}
+.sgroup:last-child{margin-bottom:0;}
+.sgh{padding:10px 14px;background:var(--c2);border-bottom:0.5px solid var(--bd);font-size:9px;letter-spacing:1.8px;color:var(--dim);text-transform:uppercase;}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:0.5px solid var(--bd);}
+.srow:last-child{border-bottom:none;}
+.sleft{display:flex;flex-direction:column;gap:3px;}
+.slabel{font-size:13px;color:#fff;}
+.sdesc{font-size:11px;color:var(--dim);}
+.sright{display:flex;align-items:center;gap:10px;}
+.sval{font-size:12px;color:var(--g);font-variant-numeric:tabular-nums;min-width:36px;text-align:right;}
+input[type=range]{-webkit-appearance:none;width:160px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--g);cursor:pointer;}
+.sbtn{padding:7px 16px;border-radius:6px;border:0.5px solid var(--bd2);background:transparent;color:var(--mid);font-size:12px;cursor:pointer;}
+.sbtn:hover{background:var(--c3);color:#fff;}
+.sbtn.primary{border-color:rgba(31,255,176,0.4);color:var(--g);}
+.sbtn.primary:hover{background:rgba(31,255,176,0.08);}
+.sbtn.danger{border-color:rgba(255,78,106,0.4);color:var(--r);}
+.sbtn.danger:hover{background:rgba(255,78,106,0.08);}
+.stag{font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(31,255,176,0.1);color:var(--g);border:0.5px solid rgba(31,255,176,0.2);}
 
-/* ── Status pill ── */
-.status-pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:20px;}
-.sp-ok{background:rgba(31,255,176,0.1);color:var(--green);}
-.sp-warn{background:rgba(255,184,63,0.1);color:var(--amber);}
-.sp-crit{background:rgba(255,78,106,0.1);color:var(--red);}
-
-/* ── Error state ── */
-#error-banner{display:none;background:rgba(255,78,106,0.1);border:0.5px solid rgba(255,78,106,0.3);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--red);}
+/* ── Error banner ── */
+#err{display:none;background:rgba(255,78,106,0.09);border:0.5px solid rgba(255,78,106,0.3);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--r);margin-bottom:6px;}
 </style>
 </head>
 <body>
 
-<div id="titlebar">
-  <span class="title">PC MONITOR</span>
-  <div id="sysbar">
-    <span><div class="dot-live"></div>LIVE</span>
-    <span id="si-cpu">―</span>
-    <span id="si-ram">―</span>
-    <span id="si-gpu">―</span>
-    <span id="si-os">―</span>
-    <span id="clock-display">―</span>
-  </div>
-  <div style="flex:1"></div>
-  <button class="win-btn" id="btn-min" title="Minimise">
-    <svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6"/></svg>
-  </button>
-  <button class="win-btn" id="btn-max" title="Maximise">
-    <svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8"/></svg>
-  </button>
-  <button class="win-btn" id="btn-close" title="Close to tray">
-    <svg viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/></svg>
-  </button>
+<!-- Titlebar -->
+<div id="tb">
+  <span id="tb-title">PC MONITOR</span>
+  <div id="ldot"></div>
+  <span id="tb-info">Loading...</span>
+  <span id="tb-clock"></span>
+  <button class="wbtn" onclick="pc.minimize()"><svg viewBox="0 0 10 10"><line x1="1" y1="5" x2="9" y2="5"/></svg></button>
+  <button class="wbtn" onclick="pc.maximize()"><svg viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8"/></svg></button>
+  <button class="wbtn" id="wc" onclick="pc.close()"><svg viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button>
 </div>
 
-<div id="app">
-  <div id="error-banner"></div>
+<!-- Tab bar -->
+<div id="tabs">
+  <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
+  <div class="tab" onclick="switchTab('history')">History</div>
+  <div class="tab" onclick="switchTab('settings')">Settings</div>
+</div>
 
-  <!-- Gauges -->
-  <div class="gauge-row">
-    <div class="gcard gc-green">
-      <div class="glabel">CPU</div>
-      <div class="gauge-wrap">
-        <svg class="gauge-svg" viewBox="0 0 96 56" fill="none">
-          <path d="M8 52 A38 38 0 0 1 88 52" stroke="rgba(255,255,255,0.07)" stroke-width="6" stroke-linecap="round"/>
-          <path id="g-cpu" d="M8 52 A38 38 0 0 1 88 52" stroke="#1fffb0" stroke-width="6" stroke-linecap="round" stroke-dasharray="119" stroke-dashoffset="119"/>
+<!-- ══ Dashboard page ══ -->
+<div class="page active" id="page-dashboard">
+  <div id="err"></div>
+  <div class="grow">
+    <div class="gc gg">
+      <div class="gl">CPU</div>
+      <div class="gw">
+        <svg class="gs" viewBox="0 0 88 52" fill="none">
+          <path d="M7 48A36 36 0 0 1 81 48" stroke="rgba(255,255,255,0.07)" stroke-width="5" stroke-linecap="round"/>
+          <path id="g-cpu" d="M7 48A36 36 0 0 1 81 48" stroke="#1fffb0" stroke-width="5" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113"/>
         </svg>
-        <div class="gval" id="v-cpu" style="color:var(--green)">--<span class="gunit">%</span></div>
-        <div class="gsub" id="sub-cpu">Detecting...</div>
+        <div class="gv" id="v-cpu" style="color:var(--g)">--<span class="gu">%</span></div>
+        <div class="gsb" id="s-cpu">―</div>
       </div>
     </div>
-    <div class="gcard gc-blue">
-      <div class="glabel">RAM</div>
-      <div class="gauge-wrap">
-        <svg class="gauge-svg" viewBox="0 0 96 56" fill="none">
-          <path d="M8 52 A38 38 0 0 1 88 52" stroke="rgba(255,255,255,0.07)" stroke-width="6" stroke-linecap="round"/>
-          <path id="g-ram" d="M8 52 A38 38 0 0 1 88 52" stroke="#38d2ff" stroke-width="6" stroke-linecap="round" stroke-dasharray="119" stroke-dashoffset="119"/>
+    <div class="gc gb">
+      <div class="gl">RAM</div>
+      <div class="gw">
+        <svg class="gs" viewBox="0 0 88 52" fill="none">
+          <path d="M7 48A36 36 0 0 1 81 48" stroke="rgba(255,255,255,0.07)" stroke-width="5" stroke-linecap="round"/>
+          <path id="g-ram" d="M7 48A36 36 0 0 1 81 48" stroke="#38d2ff" stroke-width="5" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113"/>
         </svg>
-        <div class="gval" id="v-ram" style="color:var(--blue)">--<span class="gunit">%</span></div>
-        <div class="gsub" id="sub-ram">Detecting...</div>
+        <div class="gv" id="v-ram" style="color:var(--b)">--<span class="gu">%</span></div>
+        <div class="gsb" id="s-ram">―</div>
       </div>
     </div>
-    <div class="gcard gc-amber">
-      <div class="glabel">GPU</div>
-      <div class="gauge-wrap">
-        <svg class="gauge-svg" viewBox="0 0 96 56" fill="none">
-          <path d="M8 52 A38 38 0 0 1 88 52" stroke="rgba(255,255,255,0.07)" stroke-width="6" stroke-linecap="round"/>
-          <path id="g-gpu" d="M8 52 A38 38 0 0 1 88 52" stroke="#ffb83f" stroke-width="6" stroke-linecap="round" stroke-dasharray="119" stroke-dashoffset="119"/>
+    <div class="gc ga">
+      <div class="gl">GPU</div>
+      <div class="gw">
+        <svg class="gs" viewBox="0 0 88 52" fill="none">
+          <path d="M7 48A36 36 0 0 1 81 48" stroke="rgba(255,255,255,0.07)" stroke-width="5" stroke-linecap="round"/>
+          <path id="g-gpu" d="M7 48A36 36 0 0 1 81 48" stroke="#ffb83f" stroke-width="5" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113"/>
         </svg>
-        <div class="gval" id="v-gpu" style="color:var(--amber)">--<span class="gunit">%</span></div>
-        <div class="gsub" id="sub-gpu">Detecting...</div>
+        <div class="gv" id="v-gpu" style="color:var(--a)">--<span class="gu">%</span></div>
+        <div class="gsb" id="s-gpu">―</div>
       </div>
     </div>
-    <div class="gcard gc-purple">
-      <div class="glabel">GPU VRAM</div>
-      <div class="gauge-wrap">
-        <svg class="gauge-svg" viewBox="0 0 96 56" fill="none">
-          <path d="M8 52 A38 38 0 0 1 88 52" stroke="rgba(255,255,255,0.07)" stroke-width="6" stroke-linecap="round"/>
-          <path id="g-vram" d="M8 52 A38 38 0 0 1 88 52" stroke="#b06eff" stroke-width="6" stroke-linecap="round" stroke-dasharray="119" stroke-dashoffset="119"/>
+    <div class="gc gp">
+      <div class="gl">VRAM</div>
+      <div class="gw">
+        <svg class="gs" viewBox="0 0 88 52" fill="none">
+          <path d="M7 48A36 36 0 0 1 81 48" stroke="rgba(255,255,255,0.07)" stroke-width="5" stroke-linecap="round"/>
+          <path id="g-vram" d="M7 48A36 36 0 0 1 81 48" stroke="#b06eff" stroke-width="5" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113"/>
         </svg>
-        <div class="gval" id="v-vram" style="color:var(--purple)">--<span class="gunit">%</span></div>
-        <div class="gsub" id="sub-vram">Video memory</div>
+        <div class="gv" id="v-vram" style="color:var(--p)">--<span class="gu">%</span></div>
+        <div class="gsb">Video memory</div>
       </div>
     </div>
   </div>
 
-  <!-- Middle row: cores | storage | temps -->
-  <div class="mid-row">
+  <div class="mrow">
     <div class="card">
-      <div class="card-title">CPU core load</div>
-      <div id="cores-list"></div>
+      <div class="ct">CPU Cores</div>
+      <div id="cores"></div>
     </div>
     <div class="card">
-      <div class="card-title">Storage</div>
-      <div id="storage-list"></div>
+      <div class="ct">Storage</div>
+      <div id="drives"></div>
     </div>
     <div class="card">
-      <div class="card-title">Temperatures</div>
-      <div class="temp-row" id="temp-row"></div>
+      <div class="ct">Temperatures</div>
+      <div class="trow" id="temps"><div style="font-size:10px;color:var(--dim)">Loading...</div></div>
     </div>
   </div>
 
-  <!-- Bottom row: network | processes | battery -->
-  <div class="bot-row">
+  <div class="brow">
     <div class="card">
-      <div class="card-title">Network</div>
-      <div class="net-big" id="net-section">
-        <div class="net-item">
-          <div class="net-icon-box" style="background:rgba(56,210,255,0.1);">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#38d2ff" stroke-width="1.3"/><path d="M8 1.5C8 1.5 5.5 5 5.5 8s1.2 6.5 2.5 6.5M8 1.5C8 1.5 10.5 5 10.5 8 10.5 11 9.3 14.5 8 14.5M1.5 8h13" stroke="#38d2ff" stroke-width="1.2"/></svg>
-          </div>
-          <div class="net-details">
-            <div class="net-label" id="net-iface">Network Interface</div>
-            <div class="net-speed" id="net-speed">↓ -- Mbps &nbsp; ↑ -- Mbps</div>
-          </div>
-          <div class="net-dot" id="net-dot" style="background:var(--dim)"></div>
+      <div class="ct">Network</div>
+      <div class="ni">
+        <div class="nic" style="background:rgba(56,210,255,0.1)">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6.5" stroke="#38d2ff" stroke-width="1.3"/>
+            <path d="M8 1.5C8 1.5 5.5 5 5.5 8s1.2 6.5 2.5 6.5M8 1.5c0 0 2.5 3.5 2.5 6.5S9.2 14.5 8 14.5M1.5 8h13" stroke="#38d2ff" stroke-width="1.2"/>
+          </svg>
         </div>
+        <div class="nd">
+          <div class="nl">Network</div>
+          <div class="ns" id="net-speed">↓ -- Mbps &nbsp; ↑ -- Mbps</div>
+        </div>
+        <div class="ndot" id="net-dot" style="background:var(--dim)"></div>
       </div>
     </div>
-
-    <div class="card" style="display:flex;flex-direction:column;gap:12px;">
-      <div>
-        <div class="card-title">Top processes</div>
-        <div id="proc-list"></div>
-      </div>
-      <div id="battery-section" style="display:none;">
-        <div class="card-title" style="margin-bottom:10px;">Battery</div>
-        <div class="bat-section">
-          <div>
-            <div class="bat-big" id="bat-pct">--<span>%</span></div>
-            <div class="bat-sub" id="bat-status">Unknown</div>
-          </div>
-          <div>
-            <div class="bat-bar-track">
-              <div class="bat-bar-fill" id="bat-bar" style="width:0%;background:var(--green)"></div>
-            </div>
-          </div>
-        </div>
+    <div class="card">
+      <div class="ct">Top Processes</div>
+      <div id="procs"></div>
+      <div id="bat-sec">
+        <div class="ct" style="margin-bottom:8px;">Battery</div>
+        <div class="bv" id="bat-pct">--%</div>
+        <div class="bs" id="bat-st">―</div>
+        <div class="btr"><div class="btf" id="bat-bar" style="width:0%;background:var(--g)"></div></div>
       </div>
     </div>
   </div>
+</div>
+
+<!-- ══ History page ══ -->
+<div class="page" id="page-history">
+  <div class="hgrow">
+    <div class="hcard">
+      <div class="hhead">
+        <div>
+          <div class="ct" style="margin-bottom:2px;">CPU Usage</div>
+          <div class="hval" id="hv-cpu" style="color:var(--g)">--%</div>
+        </div>
+        <div class="hpeak">Peak: <span id="hp-cpu" style="color:var(--g)">--%</span></div>
+      </div>
+      <canvas id="hc-cpu" height="120"></canvas>
+    </div>
+    <div class="hcard">
+      <div class="hhead">
+        <div>
+          <div class="ct" style="margin-bottom:2px;">RAM Usage</div>
+          <div class="hval" id="hv-ram" style="color:var(--b)">--%</div>
+        </div>
+        <div class="hpeak">Peak: <span id="hp-ram" style="color:var(--b)">--%</span></div>
+      </div>
+      <canvas id="hc-ram" height="120"></canvas>
+    </div>
+    <div class="hcard">
+      <div class="hhead">
+        <div>
+          <div class="ct" style="margin-bottom:2px;">GPU Usage</div>
+          <div class="hval" id="hv-gpu" style="color:var(--a)">--%</div>
+        </div>
+        <div class="hpeak">Peak: <span id="hp-gpu" style="color:var(--a)">--%</span></div>
+      </div>
+      <canvas id="hc-gpu" height="120"></canvas>
+    </div>
+    <div class="hcard">
+      <div class="hhead">
+        <div>
+          <div class="ct" style="margin-bottom:2px;">Network Download</div>
+          <div class="hval" id="hv-net" style="color:var(--p)">-- Mbps</div>
+        </div>
+        <div class="hpeak">Peak: <span id="hp-net" style="color:var(--p)">-- Mbps</span></div>
+      </div>
+      <canvas id="hc-net" height="120"></canvas>
+    </div>
+  </div>
+  <div style="padding:4px 0;">
+    <div style="font-size:10px;color:var(--dim);text-align:center;">Showing last <span id="hist-count">0</span> readings &nbsp;·&nbsp; <span id="hist-window">0s</span> window &nbsp;·&nbsp; <button class="sbtn" style="padding:3px 10px;font-size:10px;" onclick="clearHistory()">Clear history</button></div>
+  </div>
+</div>
+
+<!-- ══ Settings page ══ -->
+<div class="page" id="page-settings">
+
+  <div class="sgroup">
+    <div class="sgh">Polling intervals</div>
+    <div class="srow">
+      <div class="sleft">
+        <span class="slabel">Fast refresh <span style="font-size:10px;color:var(--dim)">(CPU &amp; RAM)</span></span>
+        <span class="sdesc">How often CPU and RAM are polled</span>
+      </div>
+      <div class="sright">
+        <span class="sval" id="fast-val">2s</span>
+        <input type="range" id="fast-slider" min="1" max="10" step="1" value="2" oninput="onSlider('fast',this.value)"/>
+      </div>
+    </div>
+    <div class="srow">
+      <div class="sleft">
+        <span class="slabel">Slow refresh <span style="font-size:10px;color:var(--dim)">(GPU, temps, net, procs)</span></span>
+        <span class="sdesc">How often heavier metrics are polled</span>
+      </div>
+      <div class="sright">
+        <span class="sval" id="slow-val">6s</span>
+        <input type="range" id="slow-slider" min="3" max="30" step="1" value="6" oninput="onSlider('slow',this.value)"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="sgroup">
+    <div class="sgh">History</div>
+    <div class="srow">
+      <div class="sleft">
+        <span class="slabel">History length</span>
+        <span class="sdesc">Number of data points kept per graph</span>
+      </div>
+      <div class="sright">
+        <span class="sval" id="hist-val">60</span>
+        <input type="range" id="hist-slider" min="30" max="300" step="10" value="60" oninput="onSlider('hist',this.value)"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="sgroup">
+    <div class="sgh">Current status</div>
+    <div class="srow">
+      <div class="sleft"><span class="slabel">Fast interval</span></div>
+      <div class="sright"><span class="stag" id="status-fast">2s</span></div>
+    </div>
+    <div class="srow">
+      <div class="sleft"><span class="slabel">Slow interval</span></div>
+      <div class="sright"><span class="stag" id="status-slow">6s</span></div>
+    </div>
+    <div class="srow">
+      <div class="sleft"><span class="slabel">History points</span></div>
+      <div class="sright"><span class="stag" id="status-hist">60</span></div>
+    </div>
+  </div>
+
+  <div class="sgroup">
+    <div class="sgh">Actions</div>
+    <div class="srow">
+      <div class="sleft">
+        <span class="slabel">Apply settings</span>
+        <span class="sdesc">Restart polling with new intervals</span>
+      </div>
+      <div class="sright">
+        <button class="sbtn primary" onclick="applySettings()">Apply</button>
+      </div>
+    </div>
+    <div class="srow">
+      <div class="sleft">
+        <span class="slabel">Reset to defaults</span>
+        <span class="sdesc">Fast 2s · Slow 6s · History 60 pts</span>
+      </div>
+      <div class="sright">
+        <button class="sbtn danger" onclick="resetSettings()">Reset</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-const api = window.pcMonitor;
+// ══ State ══════════════════════════════════════════════════════════════════════
+const cfg = {
+  fastMs: 2000,
+  slowMs: 6000,
+  histMax: 60
+};
 
-// Window controls
-document.getElementById('btn-min').addEventListener('click', () => api.minimize());
-document.getElementById('btn-max').addEventListener('click', () => api.maximize());
-document.getElementById('btn-close').addEventListener('click', () => api.close());
+const hist = { cpu: [], ram: [], gpu: [], net: [] };
+let peaks = { cpu: 0, ram: 0, gpu: 0, net: 0 };
 
-// Helpers
-function color(pct, isTemp = false) {
-  if (isTemp) { return pct > 85 ? 'var(--red)' : pct > 68 ? 'var(--amber)' : 'var(--green)'; }
-  return pct > 85 ? 'var(--red)' : pct > 65 ? 'var(--amber)' : 'var(--green)';
+let fastTimer = null, slowTimer = null;
+let fastBusy = false, slowBusy = false;
+
+// ══ Tab switching ══════════════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const names = ['dashboard','history','settings'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.toggle('active', p.id === 'page-' + name);
+  });
+  if (name === 'history') redrawAll();
 }
 
-function setGauge(id, pct, stroke) {
+// ══ Helpers ════════════════════════════════════════════════════════════════════
+function clr(p, isTemp) {
+  if (isTemp) return p > 85 ? '#ff4e6a' : p > 68 ? '#ffb83f' : '#1fffb0';
+  return p > 85 ? '#ff4e6a' : p > 65 ? '#ffb83f' : '#1fffb0';
+}
+function gauge(id, pct) {
   const el = document.getElementById(id);
-  if (!el) return;
-  const arc = 119;
-  el.style.strokeDashoffset = Math.max(0, arc - (Math.min(pct, 100) / 100) * arc).toFixed(1);
-  if (stroke) el.style.stroke = stroke;
+  if (el) el.style.strokeDashoffset = Math.max(0, 113 - (Math.min(pct,100)/100)*113).toFixed(1);
 }
+function setText(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+function setHTML(id, v) { const e = document.getElementById(id); if (e) e.innerHTML = v; }
+function showErr(m) { const e=document.getElementById('err'); e.style.display='block'; e.textContent='Warning: '+m; }
+function hideErr() { document.getElementById('err').style.display='none'; }
 
-function pill(pct) {
-  if (pct > 85) return `<span class="status-pill sp-crit">CRITICAL</span>`;
-  if (pct > 65) return `<span class="status-pill sp-warn">HIGH</span>`;
-  return `<span class="status-pill sp-ok">NORMAL</span>`;
-}
+// ══ Clock ══════════════════════════════════════════════════════════════════════
+setInterval(() => setText('tb-clock', new Date().toLocaleTimeString('en-GB')), 1000);
+setText('tb-clock', new Date().toLocaleTimeString('en-GB'));
 
-// Static info
-async function loadStatic() {
+// ══ Static info ════════════════════════════════════════════════════════════════
+pc.getStatic().then(d => {
+  document.getElementById('tb-info').textContent = `${d.cpu}  ·  ${d.ram} RAM  ·  ${d.gpu}  ·  ${d.os}`;
+  setText('s-cpu', d.cpu);
+  setText('s-gpu', d.gpu);
+}).catch(()=>{});
+
+// ══ Fast tick ═════════════════════════════════════════════════════════════════
+async function fastTick() {
+  if (fastBusy) return;
+  fastBusy = true;
   try {
-    const info = await api.getStaticInfo();
-    document.getElementById('si-cpu').textContent = info.cpu;
-    document.getElementById('si-ram').textContent = info.ram + ' RAM';
-    document.getElementById('si-gpu').textContent = info.gpu;
-    document.getElementById('si-os').textContent = info.os;
-    document.getElementById('sub-cpu').textContent = info.cpu;
-    document.getElementById('sub-ram').textContent = info.ram + ' total';
-    document.getElementById('sub-gpu').textContent = info.gpu;
-  } catch(e) {}
-}
+    const d = await pc.getFast();
+    hideErr();
 
-// Dynamic update
-async function update() {
-  try {
-    const d = await api.getDynamicStats();
-    if (d.error) { showError(d.error); return; }
-    hideError();
+    // CPU
+    const cc = clr(d.cpuPct);
+    document.getElementById('v-cpu').innerHTML = d.cpuPct+'<span class="gu">%</span>';
+    document.getElementById('v-cpu').style.color = cc;
+    document.getElementById('g-cpu').style.stroke = cc;
+    gauge('g-cpu', d.cpuPct);
 
-    // CPU gauge
-    const cpuC = color(d.cpuPct);
-    document.getElementById('v-cpu').innerHTML = d.cpuPct + '<span class="gunit">%</span>';
-    document.getElementById('v-cpu').style.color = cpuC;
-    document.getElementById('g-cpu').style.stroke = cpuC;
-    setGauge('g-cpu', d.cpuPct);
+    // RAM
+    const rc = clr(d.ramPct);
+    document.getElementById('v-ram').innerHTML = d.ramPct+'<span class="gu">%</span>';
+    document.getElementById('v-ram').style.color = rc;
+    document.getElementById('g-ram').style.stroke = rc;
+    gauge('g-ram', d.ramPct);
+    setText('s-ram', `${d.ramUsed} / ${d.ramTotal} GB`);
 
-    // RAM gauge
-    const ramC = color(d.ramPct);
-    document.getElementById('v-ram').innerHTML = d.ramPct + '<span class="gunit">%</span>';
-    document.getElementById('v-ram').style.color = ramC;
-    document.getElementById('g-ram').style.stroke = ramC;
-    setGauge('g-ram', d.ramPct);
-    document.getElementById('sub-ram').textContent = d.ramUsed + ' / ' + d.ramTotal + ' GB used';
-
-    // GPU gauge
-    const gpuC = color(d.gpuLoad);
-    document.getElementById('v-gpu').innerHTML = d.gpuLoad + '<span class="gunit">%</span>';
-    document.getElementById('v-gpu').style.color = gpuC;
-    document.getElementById('g-gpu').style.stroke = gpuC;
-    setGauge('g-gpu', d.gpuLoad);
-
-    // VRAM
-    const vramC = color(d.gpuVram);
-    document.getElementById('v-vram').innerHTML = d.gpuVram + '<span class="gunit">%</span>';
-    document.getElementById('v-vram').style.color = vramC;
-    setGauge('g-vram', d.gpuVram);
-
-    // CPU cores
-    const coresEl = document.getElementById('cores-list');
-    coresEl.innerHTML = d.cores.map((v, i) =>
-      `<div class="core-row">
-        <span class="core-lbl">C${i+1}</span>
-        <div class="bar-track"><div class="bar-fill" style="width:${v}%;background:${color(v)}"></div></div>
-        <span class="core-pct">${v}%</span>
-      </div>`
-    ).join('');
-
-    // Storage
-    const storEl = document.getElementById('storage-list');
-    storEl.innerHTML = d.drives.map(dr =>
-      `<div class="stor-item">
-        <div class="stor-top">
-          <span class="stor-name">${dr.mount}</span>
-          <span class="stor-info">${dr.used} / ${dr.size} GB (${dr.pct}%)</span>
-        </div>
-        <div class="stor-track"><div class="stor-fill" style="width:${dr.pct}%;background:${color(dr.pct)}"></div></div>
-      </div>`
-    ).join('');
-
-    // Temperatures
-    const tempDefs = [
-      { label: 'CPU', val: d.cpuTemp },
-      { label: 'GPU', val: d.gpuTemp }
-    ].filter(t => t.val !== null && t.val > 0);
-
-    const tempEl = document.getElementById('temp-row');
-    if (tempDefs.length > 0) {
-      tempEl.innerHTML = tempDefs.map((t, i) => {
-        const hPct = Math.min(t.val / 105 * 100, 100);
-        return `<div class="tcol">
-          <span class="tdeg" id="tdeg-${i}">${t.val}°C</span>
-          <div class="tbar-wrap"><div class="tbar" id="tbar-${i}" style="height:${hPct}%;background:${color(t.val, true)}"></div></div>
-          <span class="tname">${t.label}</span>
-        </div>`;
-      }).join('');
+    // Cores
+    const cEl = document.getElementById('cores');
+    const existing = cEl.querySelectorAll('.bf');
+    if (existing.length === d.cores.length) {
+      const pcts = cEl.querySelectorAll('.bp');
+      d.cores.forEach((v, i) => {
+        existing[i].style.width = v+'%';
+        existing[i].style.background = clr(v);
+        if (pcts[i]) pcts[i].textContent = v+'%';
+      });
     } else {
-      tempEl.innerHTML = `<div style="font-family:var(--mono);font-size:10px;color:var(--dim);padding:8px 0;">Temp sensors unavailable.<br>Run as Administrator<br>for sensor access.</div>`;
+      cEl.innerHTML = d.cores.map((v,i) =>
+        `<div class="br"><span class="bl">C${i+1}</span><div class="bt"><div class="bf" style="width:${v}%;background:${clr(v)}"></div></div><span class="bp">${v}%</span></div>`
+      ).join('');
+    }
+
+    // History
+    pushHist('cpu', d.cpuPct);
+    pushHist('ram', d.ramPct);
+    setText('hv-cpu', d.cpuPct+'%');
+    setText('hv-ram', d.ramPct+'%');
+    setText('hp-cpu', peaks.cpu+'%');
+    setText('hp-ram', peaks.ram+'%');
+    updateHistInfo();
+    if (document.getElementById('page-history').classList.contains('active')) {
+      redrawCanvas('hc-cpu', hist.cpu, '#1fffb0');
+      redrawCanvas('hc-ram', hist.ram, '#38d2ff');
+    }
+  } catch(e) { showErr(e.message); }
+  fastBusy = false;
+}
+
+// ══ Slow tick ═════════════════════════════════════════════════════════════════
+async function slowTick() {
+  if (slowBusy) return;
+  slowBusy = true;
+  try {
+    const d = await pc.getSlow();
+
+    // GPU
+    const gc = clr(d.gpuLoad);
+    document.getElementById('v-gpu').innerHTML = d.gpuLoad+'<span class="gu">%</span>';
+    document.getElementById('v-gpu').style.color = gc;
+    document.getElementById('g-gpu').style.stroke = gc;
+    gauge('g-gpu', d.gpuLoad);
+
+    const vc = clr(d.gpuVram);
+    document.getElementById('v-vram').innerHTML = d.gpuVram+'<span class="gu">%</span>';
+    document.getElementById('v-vram').style.color = vc;
+    document.getElementById('g-vram').style.stroke = vc;
+    gauge('g-vram', d.gpuVram);
+
+    // Drives
+    setHTML('drives', d.drives.map(dr =>
+      `<div class="si"><div class="st"><span class="sn">${dr.mount}</span><span class="sv">${dr.used}/${dr.size} GB (${dr.pct}%)</span></div><div class="str"><div class="sf" style="width:${dr.pct}%;background:${clr(dr.pct)}"></div></div></div>`
+    ).join(''));
+
+    // Temps
+    const temps = [{label:'CPU',val:d.cpuTemp},{label:'GPU',val:d.gpuTemp}].filter(t=>t.val&&t.val>0);
+    if (temps.length) {
+      setHTML('temps', temps.map(t => {
+        const h = Math.round(Math.min(t.val/105,1)*64);
+        return `<div class="tcol"><span class="td">${t.val}°</span><div class="tbw"><div class="tb" style="height:${h}px;background:${clr(t.val,true)}"></div></div><span class="tn">${t.label}</span></div>`;
+      }).join(''));
+    } else {
+      setHTML('temps', `<div style="font-size:10px;color:var(--dim);line-height:1.6">No sensor data.<br>Run as Admin.</div>`);
     }
 
     // Network
-    const isActive = parseFloat(d.dlMbps) > 0 || parseFloat(d.ulMbps) > 0;
-    document.getElementById('net-speed').textContent = `↓ ${d.dlMbps} Mbps   ↑ ${d.ulMbps} Mbps`;
-    document.getElementById('net-dot').style.background = isActive ? 'var(--green)' : 'var(--dim)';
+    const active = parseFloat(d.dlMbps) > 0 || parseFloat(d.ulMbps) > 0;
+    setText('net-speed', `↓ ${d.dlMbps} Mbps   ↑ ${d.ulMbps} Mbps`);
+    document.getElementById('net-dot').style.background = active ? 'var(--g)' : 'var(--dim)';
 
-    // Processes
-    const procEl = document.getElementById('proc-list');
-    procEl.innerHTML = d.topProcs.map(p =>
-      `<div class="proc-item">
-        <span class="proc-name">${p.name}</span>
-        <div class="proc-stats">
-          <span class="proc-cpu">${p.cpu}% CPU</span>
-          <span class="proc-mem">${p.mem} MB</span>
-        </div>
-      </div>`
-    ).join('');
+    // Procs
+    setHTML('procs', d.topProcs.map(p =>
+      `<div class="pi"><span class="pn">${p.name}</span><div class="ps"><span class="pc2">${p.cpu}%</span><span class="pm">${p.mem} MB</span></div></div>`
+    ).join(''));
 
     // Battery
-    if (d.battery && d.battery.has) {
-      document.getElementById('battery-section').style.display = 'block';
+    if (d.battery?.has) {
+      document.getElementById('bat-sec').style.display = 'block';
       const bp = d.battery.pct;
-      document.getElementById('bat-pct').innerHTML = bp + '<span>%</span>';
-      document.getElementById('bat-status').textContent = d.battery.charging ? '⚡ Charging' :
-        (d.battery.timeLeft > 0 ? Math.floor(d.battery.timeLeft / 60) + 'h ' + (d.battery.timeLeft % 60) + 'm remaining' : 'Discharging');
-      document.getElementById('bat-bar').style.width = bp + '%';
-      document.getElementById('bat-bar').style.background = bp < 20 ? 'var(--red)' : bp < 40 ? 'var(--amber)' : 'var(--green)';
+      setText('bat-pct', bp+'%');
+      setText('bat-st', d.battery.charging ? '⚡ Charging' : 'On battery');
+      const bar = document.getElementById('bat-bar');
+      bar.style.width = bp+'%';
+      bar.style.background = bp<20?'var(--r)':bp<40?'var(--a)':'var(--g)';
     }
 
-  } catch(e) { showError(e.message); }
+    // History
+    const dl = parseFloat(d.dlMbps);
+    pushHist('gpu', d.gpuLoad);
+    pushHist('net', dl);
+    setText('hv-gpu', d.gpuLoad+'%');
+    setText('hv-net', d.dlMbps+' Mbps');
+    setText('hp-gpu', peaks.gpu+'%');
+    setText('hp-net', peaks.net.toFixed(1)+' Mbps');
+    if (document.getElementById('page-history').classList.contains('active')) {
+      redrawCanvas('hc-gpu', hist.gpu, '#ffb83f');
+      redrawCanvas('hc-net', hist.net, '#b06eff');
+    }
+  } catch(e) {}
+  slowBusy = false;
 }
 
-function showError(msg) {
-  const el = document.getElementById('error-banner');
-  el.style.display = 'block';
-  el.textContent = 'Error reading system data: ' + msg + ' — try running as Administrator.';
+// ══ History helpers ════════════════════════════════════════════════════════════
+function pushHist(key, val) {
+  hist[key].push(val);
+  if (hist[key].length > cfg.histMax) hist[key].shift();
+  if (val > peaks[key]) peaks[key] = val;
 }
 
-function hideError() {
-  document.getElementById('error-banner').style.display = 'none';
+function clearHistory() {
+  Object.keys(hist).forEach(k => { hist[k] = []; peaks[k] = 0; });
+  redrawAll();
 }
 
-// Clock
-function tick() {
-  const now = new Date();
-  document.getElementById('clock-display').textContent = now.toLocaleTimeString('en-GB');
+function updateHistInfo() {
+  setText('hist-count', hist.cpu.length);
+  setText('hist-window', Math.round(hist.cpu.length * cfg.fastMs / 1000) + 's');
 }
-setInterval(tick, 1000); tick();
 
-// Boot
-loadStatic();
-update();
-setInterval(update, 2000);
+// ══ Canvas sparkline renderer ══════════════════════════════════════════════════
+function redrawCanvas(id, data, color) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth || canvas.parentElement.offsetWidth;
+  const H = 120;
+  if (canvas.width !== W * dpr || canvas.height !== H * dpr) {
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  if (data.length < 2) {
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.font = '11px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText('Collecting data...', W/2, H/2);
+    return;
+  }
+
+  const pad = 4;
+  const max = Math.max(100, ...data); // min scale 100 so % charts look right
+  const points = data.map((v, i) => ({
+    x: pad + (i / (data.length - 1)) * (W - pad * 2),
+    y: H - pad - (v / max) * (H - pad * 2)
+  }));
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 0.5;
+  [25, 50, 75].forEach(pct => {
+    const y = H - pad - (pct / max) * (H - pad * 2);
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '9px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText(pct + (id.includes('net') ? '' : '%'), pad + 2, y - 2);
+  });
+
+  // Fill gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, color + '30');
+  grad.addColorStop(1, color + '00');
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, H - pad);
+  points.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(points[points.length-1].x, H - pad);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  points.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Current dot
+  const last = points[points.length-1];
+  ctx.beginPath();
+  ctx.arc(last.x, last.y, 3, 0, Math.PI*2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function redrawAll() {
+  redrawCanvas('hc-cpu', hist.cpu, '#1fffb0');
+  redrawCanvas('hc-ram', hist.ram, '#38d2ff');
+  redrawCanvas('hc-gpu', hist.gpu, '#ffb83f');
+  redrawCanvas('hc-net', hist.net, '#b06eff');
+}
+
+window.addEventListener('resize', redrawAll);
+
+// ══ Settings ══════════════════════════════════════════════════════════════════
+function onSlider(key, val) {
+  val = parseInt(val);
+  if (key === 'fast') setText('fast-val', val+'s');
+  if (key === 'slow') setText('slow-val', val+'s');
+  if (key === 'hist') setText('hist-val', val);
+}
+
+function applySettings() {
+  const fastS = parseInt(document.getElementById('fast-slider').value);
+  const slowS = parseInt(document.getElementById('slow-slider').value);
+  const histN = parseInt(document.getElementById('hist-slider').value);
+
+  cfg.fastMs = fastS * 1000;
+  cfg.slowMs = slowS * 1000;
+  cfg.histMax = histN;
+
+  // Trim history if shortened
+  Object.keys(hist).forEach(k => { if (hist[k].length > histN) hist[k] = hist[k].slice(-histN); });
+
+  setText('status-fast', fastS+'s');
+  setText('status-slow', slowS+'s');
+  setText('status-hist', histN);
+
+  restartTimers();
+
+  // Visual feedback
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = 'Applied ✓';
+  btn.style.color = 'var(--g)';
+  setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
+}
+
+function resetSettings() {
+  document.getElementById('fast-slider').value = 2;
+  document.getElementById('slow-slider').value = 6;
+  document.getElementById('hist-slider').value = 60;
+  onSlider('fast', 2); onSlider('slow', 6); onSlider('hist', 60);
+  cfg.fastMs = 2000; cfg.slowMs = 6000; cfg.histMax = 60;
+  setText('status-fast','2s'); setText('status-slow','6s'); setText('status-hist','60');
+  restartTimers();
+}
+
+function restartTimers() {
+  clearInterval(fastTimer);
+  clearInterval(slowTimer);
+  fastTimer = setInterval(fastTick, cfg.fastMs);
+  slowTimer = setInterval(slowTick, cfg.slowMs);
+}
+
+// ══ Boot ══════════════════════════════════════════════════════════════════════
+fastTick();
+setTimeout(slowTick, 1200);
+restartTimers();
 </script>
 </body>
 </html>
