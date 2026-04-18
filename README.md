@@ -1,71 +1,96 @@
-# PC Monitor
+# PC Monitor — Real-time Windows Health Dashboard
 
-A real-time PC health dashboard built with Electron. Shows live CPU, RAM, GPU, storage, temperatures, network activity, and running processes in a clean dark interface.
+A native Windows desktop app built with Electron that shows live CPU, RAM,
+GPU, storage, temperatures, network, and process data from your actual hardware.
 
 ---
 
 ## Requirements
 
 - Windows 10 or 11 (64-bit)
-- [Node.js LTS](https://nodejs.org) — only needed to build or run in dev mode
+- [Node.js LTS](https://nodejs.org) — download and install before anything else
+- Internet connection for the first `npm install` only
 
 ---
 
-## Getting Started
+## Quick Start (Preview / Dev mode)
 
-**Preview instantly (dev mode)**
-Double-click `RUN_DEV.bat`. It installs dependencies and launches the app.
+1. Extract this folder anywhere on your PC
+2. Double-click `RUN_DEV.bat`
+3. The app launches immediately with live data
 
-**Build a standalone .exe**
-Double-click `BUILD.bat`. When it finishes, open the `dist/` folder:
+---
 
-| File | Description |
+## Build a Standalone .exe (for both PCs)
+
+1. Open this folder
+2. Double-click `BUILD.bat`
+3. Wait ~2 minutes for the build to complete
+4. Open the `dist/` folder — you'll find:
+   - **`PC Monitor Setup.exe`** — installer (recommended, creates Start Menu shortcut)
+   - **`PC Monitor.exe`** — portable, just copy and double-click, no install
+
+Copy either file to your other PC — no Node.js needed on the target machine.
+
+---
+
+## Features
+
+| Feature | Details |
 |---|---|
-| `PC Monitor Setup.exe` | Installer — creates a Start Menu shortcut |
-| `PC Monitor.exe` | Portable — just copy and double-click, no install needed |
-
-Either file can be copied to another Windows PC. Node.js is not required on the target machine.
-
----
-
-## What It Shows
-
-- **CPU** — overall load % and per-core breakdown
-- **RAM** — usage % and GB used / total
-- **GPU** — load % and VRAM usage %
-- **Storage** — all drives with used / total GB
-- **Temperatures** — CPU and GPU in °C
-- **Network** — live download and upload speed in Mbps
-- **Processes** — top 5 CPU-hungry processes
-- **Battery** — charge % and status (laptops only)
+| CPU | Overall % load + per-core bars |
+| RAM | Usage %, GB used / total |
+| GPU | Load % + VRAM % (NVIDIA/AMD) |
+| Storage | All drives — used/total GB with bar |
+| Temperatures | CPU + GPU °C with heat-coded bars |
+| Network | Real-time download/upload Mbps |
+| Processes | Top 5 CPU-hungry processes |
+| Battery | % + charging status (laptops) |
+| System tray | Closes to tray, double-click to restore |
 
 ---
 
-## Notes
+## Temperature Sensors
 
-**Temperatures not showing?**
-Right-click the app → Run as administrator. Windows restricts hardware sensor access by default.
+Windows requires elevated privileges for hardware sensor access.
 
-**GPU stats showing 0%?**
-Make sure GeForce Experience (NVIDIA) or Radeon Software (AMD) is installed.
+**If temps show "unavailable":**
+Right-click the app → Run as Administrator
 
-**Closing the window** hides the app to the system tray. Right-click the tray icon to quit fully.
-
-**Refresh rate** is every 2 seconds. To change it, open `src/index.html` and find `setInterval(update, 2000)` near the bottom.
+Or create a shortcut and enable "Run as administrator" in its Properties → Compatibility tab.
 
 ---
 
-## Project Structure
+## Folder Structure
 
 ```
 pc-monitor/
-├── assets/
-│   └── icon.ico
 ├── src/
-│   ├── main.js       — Electron main process
-│   ├── preload.js    — IPC bridge
-│   └── index.html    — Dashboard UI
-├── BUILD.bat         — Build standalone .exe
-├── RUN_DEV.bat       — Launch in dev mode
-└── package.json
+│   ├── main.js        ← Electron main process
+│   ├── preload.js     ← Secure IPC bridge
+│   └── index.html     ← Dashboard UI
+├── assets/
+│   └── icon.ico       ← App icon (replace with your own if you like)
+├── package.json
+├── BUILD.bat          ← Build standalone .exe
+└── RUN_DEV.bat        ← Launch in dev/preview mode
 ```
+
+---
+
+## Update Interval
+
+Stats refresh every **2 seconds**. To change this, open `src/index.html`
+and find `setInterval(update, 2000)` near the bottom — change `2000` to
+any millisecond value you like (e.g. `1000` for 1 second).
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| GPU shows 0% | NVIDIA users: install GeForce Experience; AMD: Radeon Software |
+| Temps not showing | Run as Administrator |
+| Build fails | Make sure Node.js is installed and you have internet access |
+| App won't launch | Right-click → Run as Administrator |
