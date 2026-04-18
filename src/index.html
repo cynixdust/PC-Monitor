@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PC Monitor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --green:#1fffb0;--amber:#ffb83f;--red:#ff4e6a;--blue:#38d2ff;--purple:#b06eff;
+  --bg:#0a0d14;--bg2:#0f1320;--bg3:#151b2e;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --dim:rgba(255,255,255,0.38);--mid:rgba(255,255,255,0.65);
+  --mono:'Share Tech Mono',monospace;--main:'Exo 2',sans-serif;
+}
+body{background:var(--bg);color:#fff;font-family:var(--main);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+/* ── Titlebar ── */
+#titlebar{height:36px;background:var(--bg2);border-bottom:0.5px solid var(--border);display:flex;align-items:center;padding:0 14px;-webkit-app-region:drag;flex-shrink:0;}
+#titlebar .title{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--green);flex:1;}
+.win-btn{-webkit-app-region:no-drag;width:28px;height:28px;border:none;background:transparent;cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;margin-left:2px;transition:background 0.15s;}
+.win-btn:hover{background:rgba(255,255,255,0.08);}
+.win-btn svg{width:12px;height:12px;stroke:#fff;stroke-width:1.5;fill:none;}
+#btn-close:hover{background:rgba(255,78,106,0.25);}
+#btn-close:hover svg{stroke:var(--red);}
+
+/* ── Layout ── */
+#app{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+#app::-webkit-scrollbar{width:4px;}
+#app::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+
+/* ── System info bar ── */
+#sysbar{display:flex;gap:16px;align-items:center;font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:0.5px;flex-wrap:wrap;}
+#sysbar span{display:flex;align-items:center;gap:5px;}
+.dot-live{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 1.8s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+/* ── Top gauge row ── */
+.gauge-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.gcard{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:16px 14px;position:relative;overflow:hidden;}
+.gcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.gc-green::before{background:var(--green);}
+.gc-blue::before{background:var(--blue);}
+.gc-amber::before{background:var(--amber);}
+.gc-purple::before{background:var(--purple);}
+.glabel{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--dim);margin-bottom:12px;text-transform:uppercase;}
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.gauge-svg{width:96px;height:56px;}
+.gval{font-family:var(--mono);font-size:24px;letter-spacing:-1px;}
+.gunit{font-size:12px;}
+.gsub{font-size:10px;color:var(--dim);font-family:var(--mono);text-align:center;line-height:1.3;}
+
+/* ── Middle row ── */
+.mid-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:16px;}
+.card-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:14px;}
+
+/* ── Core bars ── */
+.core-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.core-lbl{font-family:var(--mono);font-size:10px;color:var(--dim);width:20px;flex-shrink:0;}
+.bar-track{flex:1;height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width 0.5s ease;}
+.core-pct{font-family:var(--mono);font-size:10px;color:var(--mid);width:30px;text-align:right;}
+
+/* ── Storage ── */
+.stor-item{margin-bottom:12px;}
+.stor-item:last-child{margin-bottom:0;}
+.stor-top{display:flex;justify-content:space-between;margin-bottom:5px;}
+.stor-name{font-size:11px;font-family:var(--mono);color:var(--mid);}
+.stor-info{font-size:10px;font-family:var(--mono);color:var(--dim);}
+.stor-track{height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;}
+.stor-fill{height:100%;border-radius:3px;transition:width 0.6s ease;}
+
+/* ── Temps ── */
+.temp-row{display:flex;gap:10px;align-items:flex-end;justify-content:space-around;}
+.tcol{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.tbar-wrap{width:20px;height:70px;background:rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;}
+.tbar{width:100%;border-radius:10px;transition:height 0.6s ease;}
+.tdeg{font-family:var(--mono);font-size:10px;color:var(--mid);}
+.tname{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:0.5px;}
+
+/* ── Network ── */
+.net-big{display:flex;flex-direction:column;gap:14px;}
+.net-item{display:flex;align-items:center;gap:10px;}
+.net-icon-box{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.net-details{flex:1;min-width:0;}
+.net-label{font-size:11px;font-family:var(--mono);color:var(--mid);margin-bottom:2px;}
+.net-speed{font-size:10px;font-family:var(--mono);color:var(--dim);}
+.net-dot{width:7px;height:7px;border-radius:50%;}
+
+/* ── Bottom row ── */
+.bot-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* ── Processes ── */
+.proc-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border);}
+.proc-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.proc-name{font-size:11px;font-family:var(--mono);color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+.proc-stats{display:flex;gap:12px;}
+.proc-cpu{font-size:10px;font-family:var(--mono);color:var(--amber);}
+.proc-mem{font-size:10px;font-family:var(--mono);color:var(--dim);}
+
+/* ── Battery ── */
+.bat-section{display:flex;flex-direction:column;gap:10px;}
+.bat-big{font-family:var(--mono);font-size:32px;color:var(--green);}
+.bat-big span{font-size:14px;}
+.bat-sub{font-size:10px;font-family:var(--mono);color:var(--dim);}
+.bat-bar-track{height:8px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;margin-top:4px;}
+.bat-bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease;}
+
+/* ── Status pill ── */
+.status-pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:20px;}
+.sp-ok{background:rgba(31,255,176,0.1);color:var(--green);}
+.sp-warn{background:rgba(255,184,63,0.1);color:var(--amber);}
+.sp-crit{background:rgba(255,78,106,0.1);color:var(--red);}
+
+/* ── Error state ── */
+#error-banner{display:none;background:rgba(255,78,106,0.1);border:0.5px solid rgba(255,78,106,0.3);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--red);}
+</style>
+</head>
+<body>
+
+<div id="titlebar">
+  <span class="title">PC MONITOR</span>
+  <div id="sysbar">
+    <span><div class="dot-live"></div>LIVE</span>
+    <span id="si-cpu">―</span>
+    <span id="si-ram">―</span>
+    <span id="si-gpu">―</span>
+    <span id="si-os">―</span>
+    <span id="clock-display">―</span>
+  </div>
+  <div style="flex:1"></div>
+  <button class="win-btn" id="btn-min" title="Minimise">
+    <svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6"/></svg>
+  </button>
+  <button class="win-btn" id="btn-max" title="Maximise">
+    <svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8"/></svg>
+  </button>
+  <button class="win-btn" id="btn-close" title="Close to tray">
+    <svg viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/></svg>
+  </button>
+</div>
+
+<div id="app">
+  <div id="error-banner"></div>
+
+  <!-- Gauges -->
+  <div class="gauge-row">
+    <div class="gcard gc-green">
+      <div class="glabel">CPU</div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 96 56" fill="none">
+          <path d="M8 52 A38 38 0 0 1 88 52" stroke="rgba(255,255,255,0.07)" stroke-width="6" stroke-linecap="round"/>
+          <path id="g-cpu" d="M8 52 A38 38 0 0 1 88 52" stroke="#1fffb0" stroke-width="6" stroke-linecap="round" stroke-dasharray="119" stroke-dashoffset="119"/>
+        </svg>
+        <div class="gval" id="v-cpu" style="color:var(--green)">--<span class="gunit">%</span></div>
+        <div class="gsub" id="sub-cpu">Detecting...</div>
+      </div>
+    </div>
+    <div class="gcard gc-blue">
+      <div class="glabel">RAM</div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 96 56" fill="none">
+          <path d="M8 52 A38 38 0 0 1 88 52" stroke="rgba(255,255,255,0.07)" stroke-width="6" stroke-linecap="round"/>
+          <path id="g-ram" d="M8 52 A38 38 0 0 1 88 52" stroke="#38d2ff" stroke-width="6" stroke-linecap="round" stroke-dasharray="119" stroke-dashoffset="119"/>
+        </svg>
+        <div class="gval" id="v-ram" style="color:var(--blue)">--<span class="gunit">%</span></div>
+        <div class="gsub" id="sub-ram">Detecting...</div>
+      </div>
+    </div>
+    <div class="gcard gc-amber">
+      <div class="glabel">GPU</div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 96 56" fill="none">
+          <path d="M8 52 A38 38 0 0 1 88 52" stroke="rgba(255,255,255,0.07)" stroke-width="6" stroke-linecap="round"/>
+          <path id="g-gpu" d="M8 52 A38 38 0 0 1 88 52" stroke="#ffb83f" stroke-width="6" stroke-linecap="round" stroke-dasharray="119" stroke-dashoffset="119"/>
+        </svg>
+        <div class="gval" id="v-gpu" style="color:var(--amber)">--<span class="gunit">%</span></div>
+        <div class="gsub" id="sub-gpu">Detecting...</div>
+      </div>
+    </div>
+    <div class="gcard gc-purple">
+      <div class="glabel">GPU VRAM</div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 96 56" fill="none">
+          <path d="M8 52 A38 38 0 0 1 88 52" stroke="rgba(255,255,255,0.07)" stroke-width="6" stroke-linecap="round"/>
+          <path id="g-vram" d="M8 52 A38 38 0 0 1 88 52" stroke="#b06eff" stroke-width="6" stroke-linecap="round" stroke-dasharray="119" stroke-dashoffset="119"/>
+        </svg>
+        <div class="gval" id="v-vram" style="color:var(--purple)">--<span class="gunit">%</span></div>
+        <div class="gsub" id="sub-vram">Video memory</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Middle row: cores | storage | temps -->
+  <div class="mid-row">
+    <div class="card">
+      <div class="card-title">CPU core load</div>
+      <div id="cores-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Storage</div>
+      <div id="storage-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Temperatures</div>
+      <div class="temp-row" id="temp-row"></div>
+    </div>
+  </div>
+
+  <!-- Bottom row: network | processes | battery -->
+  <div class="bot-row">
+    <div class="card">
+      <div class="card-title">Network</div>
+      <div class="net-big" id="net-section">
+        <div class="net-item">
+          <div class="net-icon-box" style="background:rgba(56,210,255,0.1);">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#38d2ff" stroke-width="1.3"/><path d="M8 1.5C8 1.5 5.5 5 5.5 8s1.2 6.5 2.5 6.5M8 1.5C8 1.5 10.5 5 10.5 8 10.5 11 9.3 14.5 8 14.5M1.5 8h13" stroke="#38d2ff" stroke-width="1.2"/></svg>
+          </div>
+          <div class="net-details">
+            <div class="net-label" id="net-iface">Network Interface</div>
+            <div class="net-speed" id="net-speed">↓ -- Mbps &nbsp; ↑ -- Mbps</div>
+          </div>
+          <div class="net-dot" id="net-dot" style="background:var(--dim)"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <div class="card-title">Top processes</div>
+        <div id="proc-list"></div>
+      </div>
+      <div id="battery-section" style="display:none;">
+        <div class="card-title" style="margin-bottom:10px;">Battery</div>
+        <div class="bat-section">
+          <div>
+            <div class="bat-big" id="bat-pct">--<span>%</span></div>
+            <div class="bat-sub" id="bat-status">Unknown</div>
+          </div>
+          <div>
+            <div class="bat-bar-track">
+              <div class="bat-bar-fill" id="bat-bar" style="width:0%;background:var(--green)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const api = window.pcMonitor;
+
+// Window controls
+document.getElementById('btn-min').addEventListener('click', () => api.minimize());
+document.getElementById('btn-max').addEventListener('click', () => api.maximize());
+document.getElementById('btn-close').addEventListener('click', () => api.close());
+
+// Helpers
+function color(pct, isTemp = false) {
+  if (isTemp) { return pct > 85 ? 'var(--red)' : pct > 68 ? 'var(--amber)' : 'var(--green)'; }
+  return pct > 85 ? 'var(--red)' : pct > 65 ? 'var(--amber)' : 'var(--green)';
+}
+
+function setGauge(id, pct, stroke) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const arc = 119;
+  el.style.strokeDashoffset = Math.max(0, arc - (Math.min(pct, 100) / 100) * arc).toFixed(1);
+  if (stroke) el.style.stroke = stroke;
+}
+
+function pill(pct) {
+  if (pct > 85) return `<span class="status-pill sp-crit">CRITICAL</span>`;
+  if (pct > 65) return `<span class="status-pill sp-warn">HIGH</span>`;
+  return `<span class="status-pill sp-ok">NORMAL</span>`;
+}
+
+// Static info
+async function loadStatic() {
+  try {
+    const info = await api.getStaticInfo();
+    document.getElementById('si-cpu').textContent = info.cpu;
+    document.getElementById('si-ram').textContent = info.ram + ' RAM';
+    document.getElementById('si-gpu').textContent = info.gpu;
+    document.getElementById('si-os').textContent = info.os;
+    document.getElementById('sub-cpu').textContent = info.cpu;
+    document.getElementById('sub-ram').textContent = info.ram + ' total';
+    document.getElementById('sub-gpu').textContent = info.gpu;
+  } catch(e) {}
+}
+
+// Dynamic update
+async function update() {
+  try {
+    const d = await api.getDynamicStats();
+    if (d.error) { showError(d.error); return; }
+    hideError();
+
+    // CPU gauge
+    const cpuC = color(d.cpuPct);
+    document.getElementById('v-cpu').innerHTML = d.cpuPct + '<span class="gunit">%</span>';
+    document.getElementById('v-cpu').style.color = cpuC;
+    document.getElementById('g-cpu').style.stroke = cpuC;
+    setGauge('g-cpu', d.cpuPct);
+
+    // RAM gauge
+    const ramC = color(d.ramPct);
+    document.getElementById('v-ram').innerHTML = d.ramPct + '<span class="gunit">%</span>';
+    document.getElementById('v-ram').style.color = ramC;
+    document.getElementById('g-ram').style.stroke = ramC;
+    setGauge('g-ram', d.ramPct);
+    document.getElementById('sub-ram').textContent = d.ramUsed + ' / ' + d.ramTotal + ' GB used';
+
+    // GPU gauge
+    const gpuC = color(d.gpuLoad);
+    document.getElementById('v-gpu').innerHTML = d.gpuLoad + '<span class="gunit">%</span>';
+    document.getElementById('v-gpu').style.color = gpuC;
+    document.getElementById('g-gpu').style.stroke = gpuC;
+    setGauge('g-gpu', d.gpuLoad);
+
+    // VRAM
+    const vramC = color(d.gpuVram);
+    document.getElementById('v-vram').innerHTML = d.gpuVram + '<span class="gunit">%</span>';
+    document.getElementById('v-vram').style.color = vramC;
+    setGauge('g-vram', d.gpuVram);
+
+    // CPU cores
+    const coresEl = document.getElementById('cores-list');
+    coresEl.innerHTML = d.cores.map((v, i) =>
+      `<div class="core-row">
+        <span class="core-lbl">C${i+1}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${v}%;background:${color(v)}"></div></div>
+        <span class="core-pct">${v}%</span>
+      </div>`
+    ).join('');
+
+    // Storage
+    const storEl = document.getElementById('storage-list');
+    storEl.innerHTML = d.drives.map(dr =>
+      `<div class="stor-item">
+        <div class="stor-top">
+          <span class="stor-name">${dr.mount}</span>
+          <span class="stor-info">${dr.used} / ${dr.size} GB (${dr.pct}%)</span>
+        </div>
+        <div class="stor-track"><div class="stor-fill" style="width:${dr.pct}%;background:${color(dr.pct)}"></div></div>
+      </div>`
+    ).join('');
+
+    // Temperatures
+    const tempDefs = [
+      { label: 'CPU', val: d.cpuTemp },
+      { label: 'GPU', val: d.gpuTemp }
+    ].filter(t => t.val !== null && t.val > 0);
+
+    const tempEl = document.getElementById('temp-row');
+    if (tempDefs.length > 0) {
+      tempEl.innerHTML = tempDefs.map((t, i) => {
+        const hPct = Math.min(t.val / 105 * 100, 100);
+        return `<div class="tcol">
+          <span class="tdeg" id="tdeg-${i}">${t.val}°C</span>
+          <div class="tbar-wrap"><div class="tbar" id="tbar-${i}" style="height:${hPct}%;background:${color(t.val, true)}"></div></div>
+          <span class="tname">${t.label}</span>
+        </div>`;
+      }).join('');
+    } else {
+      tempEl.innerHTML = `<div style="font-family:var(--mono);font-size:10px;color:var(--dim);padding:8px 0;">Temp sensors unavailable.<br>Run as Administrator<br>for sensor access.</div>`;
+    }
+
+    // Network
+    const isActive = parseFloat(d.dlMbps) > 0 || parseFloat(d.ulMbps) > 0;
+    document.getElementById('net-speed').textContent = `↓ ${d.dlMbps} Mbps   ↑ ${d.ulMbps} Mbps`;
+    document.getElementById('net-dot').style.background = isActive ? 'var(--green)' : 'var(--dim)';
+
+    // Processes
+    const procEl = document.getElementById('proc-list');
+    procEl.innerHTML = d.topProcs.map(p =>
+      `<div class="proc-item">
+        <span class="proc-name">${p.name}</span>
+        <div class="proc-stats">
+          <span class="proc-cpu">${p.cpu}% CPU</span>
+          <span class="proc-mem">${p.mem} MB</span>
+        </div>
+      </div>`
+    ).join('');
+
+    // Battery
+    if (d.battery && d.battery.has) {
+      document.getElementById('battery-section').style.display = 'block';
+      const bp = d.battery.pct;
+      document.getElementById('bat-pct').innerHTML = bp + '<span>%</span>';
+      document.getElementById('bat-status').textContent = d.battery.charging ? '⚡ Charging' :
+        (d.battery.timeLeft > 0 ? Math.floor(d.battery.timeLeft / 60) + 'h ' + (d.battery.timeLeft % 60) + 'm remaining' : 'Discharging');
+      document.getElementById('bat-bar').style.width = bp + '%';
+      document.getElementById('bat-bar').style.background = bp < 20 ? 'var(--red)' : bp < 40 ? 'var(--amber)' : 'var(--green)';
+    }
+
+  } catch(e) { showError(e.message); }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-banner');
+  el.style.display = 'block';
+  el.textContent = 'Error reading system data: ' + msg + ' — try running as Administrator.';
+}
+
+function hideError() {
+  document.getElementById('error-banner').style.display = 'none';
+}
+
+// Clock
+function tick() {
+  const now = new Date();
+  document.getElementById('clock-display').textContent = now.toLocaleTimeString('en-GB');
+}
+setInterval(tick, 1000); tick();
+
+// Boot
+loadStatic();
+update();
+setInterval(update, 2000);
+</script>
+</body>
+</html>
